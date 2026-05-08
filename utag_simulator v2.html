@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UTAG P&L 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+:root{
+  --bg:#0f0f13;--surface:#1a1a22;--surface2:#22222e;--border:#2e2e3e;
+  --text:#f0f0f5;--muted:#8888a0;--faint:#3a3a50;
+  --green:#22c98a;--green-dim:rgba(34,201,138,.12);
+  --red:#f05c5c;--red-dim:rgba(240,92,92,.12);
+  --blue:#5b9cf6;--blue-dim:rgba(91,156,246,.12);
+  --amber:#f5a623;--amber-dim:rgba(245,166,35,.1);
+  --accent:#7c6af7;--accent-dim:rgba(124,106,247,.15);
+  --r:14px;--r-sm:8px;--r-xs:5px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+.app{max-width:1200px;margin:0 auto;padding:2rem 1.5rem 5rem}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2.5rem;flex-wrap:wrap;gap:1rem}
+.logo{width:36px;height:36px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.t-title{font-size:18px;font-weight:600}
+.t-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.axa-pill{font-size:11px;color:var(--amber);background:var(--amber-dim);border:1px solid rgba(245,166,35,.25);border-radius:20px;padding:5px 12px}
+.tabs{display:flex;gap:4px;background:var(--surface);border-radius:var(--r);padding:4px;margin-bottom:2rem;width:fit-content}
+.tab{padding:9px 22px;border-radius:var(--r-sm);border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;transition:all .2s}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--accent);color:#fff;font-weight:600}
+.page{display:none}.page.active{display:block}
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.75rem}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);border-radius:var(--r) var(--r) 0 0;opacity:.4}
+.kpi.kpi-pos::before{background:var(--green)}
+.kpi.kpi-neg::before{background:var(--red)}
+.kpi-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
+.kpi-val{font-size:26px;font-weight:700;letter-spacing:-.5px}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:5px}
+.pos{color:var(--green)}.neg{color:var(--red)}.neu{color:var(--text)}
+.scene-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;margin-bottom:1.75rem}
+.scene-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.scene-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.toggle-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin-bottom:12px}
+.tog{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface2);cursor:pointer;user-select:none;transition:all .15s}
+.tog:hover{border-color:var(--accent);background:var(--accent-dim)}
+.tog.on{border-color:var(--accent);background:var(--accent-dim)}
+.tog-chk{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center}
+.tog.on .tog-chk{background:var(--accent);border-color:var(--accent)}
+.tog-chk-mark{display:none;color:#fff;font-size:11px;font-weight:700}
+.tog.on .tog-chk-mark{display:block}
+.tog-name{font-size:12px;font-weight:500;color:var(--text);line-height:1.3}
+.tog-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.prob-tag{display:inline-block;font-size:10px;padding:1px 7px;border-radius:10px;font-weight:600;margin-left:5px;vertical-align:middle}
+.prob-H{background:var(--blue-dim);color:var(--blue)}
+.prob-M{background:var(--amber-dim);color:var(--amber)}
+.scene-summary{font-size:12px;color:var(--muted);padding-top:10px;border-top:1px solid var(--border)}
+.scene-summary b{color:var(--green)}
+.month-nav{display:flex;align-items:center;gap:6px;margin-bottom:1.25rem;flex-wrap:wrap}
+.mn-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.m-btn{padding:5px 12px;border-radius:var(--r-xs);border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:500;font-family:inherit}
+.m-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.main-grid{display:grid;grid-template-columns:1fr 340px;gap:1.25rem;margin-bottom:1.25rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem}
+.card-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:1rem}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.leg{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.bk-header{display:grid;grid-template-columns:1fr 80px 60px;gap:6px;padding:6px 14px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border)}
+.bk-row{display:grid;grid-template-columns:1fr 80px 60px;gap:6px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--faint)}
+.bk-row:hover{background:var(--surface2)}
+.bk-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk-dept{font-size:10px;color:var(--muted);margin-top:1px}
+.bk-amt{font-size:12px;font-weight:600;text-align:right;white-space:nowrap}
+.bk-bar-wrap{height:4px;background:var(--faint);border-radius:2px;overflow:hidden}
+.bk-bar{height:100%;border-radius:2px}
+.bk-total{display:grid;grid-template-columns:1fr 80px 60px;gap:6px;align-items:center;padding:10px 14px;background:var(--surface2);border-top:1px solid var(--border)}
+.bk-total .bk-name{font-weight:700;font-size:13px}
+.bk-total .bk-amt{font-size:14px;font-weight:700}
+.month-detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem}
+.md-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px}
+.md-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
+.md-val{font-size:22px;font-weight:700;letter-spacing:-.3px}
+.md-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.sim-layout{display:grid;grid-template-columns:320px 1fr;gap:1.5rem;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem}
+.psec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:20px 0 10px;padding-top:16px;border-top:1px solid var(--border)}
+.psec-first{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px}
+.sl-row{margin-bottom:14px}
+.sl-hdr{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.sl-name{font-size:13px;font-weight:500}
+.sl-val{font-size:15px;font-weight:700;color:var(--accent)}
+.sl-hint{font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.5}
+input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;height:4px}
+.stag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;margin-left:4px;vertical-align:middle}
+.stag-new{background:var(--blue-dim);color:var(--blue)}
+.stag-pct{background:var(--green-dim);color:var(--green)}
+.travel-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px;margin-top:10px}
+.travel-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:5px 0;border-bottom:1px solid var(--faint)}
+.travel-row:last-child{border-bottom:none}
+.travel-row span:first-child{color:var(--muted)}
+.t-inp{width:75px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--r-xs);font-size:12px;text-align:right;background:var(--surface);color:var(--text);font-family:inherit}
+.t-inp:focus{outline:none;border-color:var(--accent)}
+.t-inp-wide{width:120px;padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--r-xs);font-size:12px;text-align:right;background:var(--surface);color:var(--text);font-family:inherit}
+.t-inp-wide:focus{outline:none;border-color:var(--accent)}
+.extra-row{display:grid;grid-template-columns:1fr 100px 28px;gap:6px;align-items:center;margin-bottom:8px}
+.ei-t{padding:6px 10px;border:1px solid var(--border);border-radius:var(--r-xs);font-size:12px;width:100%;background:var(--surface2);color:var(--text);font-family:inherit}
+.ei-n{padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-xs);font-size:12px;width:100%;text-align:right;background:var(--surface2);color:var(--text);font-family:inherit}
+.ei-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:0;line-height:1;font-family:inherit}
+.add-btn{width:100%;padding:8px;border:1.5px dashed var(--border);border-radius:var(--r-sm);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;margin-top:4px;font-family:inherit}
+.add-btn:hover{border-color:var(--accent);color:var(--accent)}
+.info-blue{background:var(--blue-dim);border:1px solid rgba(91,156,246,.2);border-radius:var(--r-sm);padding:10px 14px;font-size:11px;color:#90b8ff;line-height:1.6;margin-bottom:12px}
+.info-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 14px;font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:10px}
+.info-box strong{color:var(--text)}
+.hint-banner{background:var(--accent-dim);border:1px solid rgba(124,106,247,.25);border-radius:var(--r-sm);padding:10px 16px;font-size:12px;color:#b0a8f8;margin-bottom:1.75rem}
+.impact-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem}
+.imp-group-wrap{padding:14px 0;border-top:1px solid var(--faint)}
+.imp-group-wrap:first-child{border-top:none;padding-top:0}
+.imp-group-title{font-size:13px;font-weight:600;margin-bottom:8px}
+.imp-sub-row{display:grid;grid-template-columns:150px 1fr 80px;gap:8px;align-items:center;padding:4px 0 4px 14px}
+.imp-sub-name{font-size:11px;color:var(--muted)}
+.imp-sub-note{font-size:10px;color:var(--faint)}
+.imp-bar-wrap{height:5px;background:var(--faint);border-radius:3px;overflow:hidden}
+.imp-cum-row{display:grid;grid-template-columns:150px 1fr 80px;gap:8px;align-items:center;padding:6px 0 2px}
+.imp-cum-lbl{font-size:11px;font-weight:700}
+.imp-cum-amt{font-size:13px;font-weight:700;color:var(--red);text-align:right}
+.imp-total{display:flex;justify-content:space-between;align-items:center;padding:12px 0 0;margin-top:8px;border-top:1px solid var(--border)}
+.imp-total span:first-child{font-size:13px;font-weight:600}
+.imp-total span:last-child{font-size:16px;font-weight:700;color:var(--red)}
+.result-footer{margin-top:2rem;padding:2rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1.5rem}
+.rf-val{font-size:42px;font-weight:700;letter-spacing:-1px;line-height:1}
+.rf-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+.rf-sub{font-size:12px;color:var(--muted);margin-top:6px}
+.rf-right{font-size:12px;color:var(--muted);max-width:280px;line-height:1.6;border-left:1px solid var(--border);padding-left:1.5rem}
+.alert-note{background:var(--red-dim);border:1px solid rgba(240,92,92,.25);border-radius:var(--r-sm);padding:10px 14px;font-size:12px;color:var(--red);margin-top:1rem}
+/* PAGE 3 */
+.p3-layout{display:grid;grid-template-columns:300px 1fr;gap:1.5rem;align-items:start}
+.p3-projects{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;margin-bottom:1.5rem}
+.p3-proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.p3-proj-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface2);font-size:12px;font-weight:500;color:var(--muted)}
+.p3-proj-item.active{border-color:var(--green);background:var(--green-dim);color:var(--text)}
+.p3-dot{width:8px;height:8px;border-radius:50%;background:var(--faint);flex-shrink:0}
+.p3-proj-item.active .p3-dot{background:var(--green)}
+.cost-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem}
+.cost-cat{margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--border)}
+.cost-cat:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.cost-cat-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px}
+.cost-item{display:grid;grid-template-columns:1fr 80px 70px;gap:8px;align-items:center;margin-bottom:10px}
+.cost-item:last-child{margin-bottom:0}
+.ci-name{font-size:12px;font-weight:500}
+.ci-amt{font-size:10px;color:var(--muted);margin-top:2px}
+.ci-pct-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.ci-pct-val{font-size:13px;font-weight:700;color:var(--accent)}
+.ci-pct-slider{width:100%;accent-color:var(--accent);height:3px;cursor:pointer}
+.ci-fifa-amt{font-size:12px;font-weight:700;color:var(--red);text-align:right}
+.wf-row{display:grid;grid-template-columns:160px 1fr 90px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--faint)}
+.wf-row.wf-total{border-top:2px solid var(--border);padding-top:12px;border-bottom:none;margin-top:4px}
+.wf-lbl{font-size:12px;font-weight:500}
+.wf-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.wf-bar-wrap{height:7px;background:var(--faint);border-radius:4px;overflow:hidden}
+.wf-amt{font-size:13px;font-weight:700;text-align:right}
+.wf-row.wf-total .wf-lbl{font-size:14px;font-weight:700}
+.wf-row.wf-total .wf-amt{font-size:18px}
+.fifa-kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.5rem}
+@media(max-width:860px){
+  .kpi-strip,.fifa-kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .main-grid,.sim-layout,.p3-layout{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">UT</div>
+    <div>
+      <div class="t-title">P&amp;L Simulator 2026</div>
+      <div class="t-sub">FIFA World Cup &middot; Proyeccion comercial</div>
+    </div>
+  </div>
+  <span class="axa-pill">AXA Colombia: retenciones $1,133/mes aplicadas</span>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showPage('p1',this)">Resultado por mes</button>
+  <button class="tab" onclick="showPage('p2',this)">Simulador de costos</button>
+  <button class="tab" onclick="showPage('p3',this)">Rentabilidad FIFA</button>
+</div>
+
+<!-- PAGE 1 -->
+<div class="page active" id="p1">
+  <div class="scene-wrap">
+    <div class="scene-title">Proyectos adicionales &mdash; tilda para incluir en el resultado</div>
+    <div class="toggle-grid" id="toggle-grid"></div>
+    <div class="scene-summary" id="scene-summary">Solo proyectos confirmados incluidos.</div>
+  </div>
+  <div class="kpi-strip">
+    <div class="kpi"><div class="kpi-lbl">Ingresos proyectados</div><div class="kpi-val neu" id="k-rev">-</div><div class="kpi-sub" id="k-rev-s">-</div></div>
+    <div class="kpi"><div class="kpi-lbl">Costos anuales</div><div class="kpi-val neg" id="k-cost">-</div><div class="kpi-sub">Estructura + operacion</div></div>
+    <div class="kpi"><div class="kpi-lbl">Ganancia neta</div><div class="kpi-val" id="k-profit">-</div><div class="kpi-sub" id="k-profit-s">-</div></div>
+    <div class="kpi"><div class="kpi-lbl">Margen neto</div><div class="kpi-val" id="k-margin">-</div><div class="kpi-sub" id="k-margin-s">-</div></div>
+  </div>
+  <div class="month-nav">
+    <span class="mn-label">Mes</span>
+    <button class="m-btn active" id="mb-all" onclick="selectMonth(-1)">Todo el año</button>
+  </div>
+  <div class="main-grid">
+    <div class="card">
+      <div class="card-title">Resultado mensual</div>
+      <div class="legend">
+        <span class="leg"><span class="leg-dot" style="background:rgba(34,201,138,.6)"></span>Ganancia</span>
+        <span class="leg"><span class="leg-dot" style="background:rgba(240,92,92,.6)"></span>Perdida</span>
+        <span class="leg"><span class="leg-dot" style="background:var(--accent);width:16px;height:2px;border-radius:0"></span>Acumulado</span>
+      </div>
+      <div style="position:relative;height:280px"><canvas id="cMain" role="img"></canvas></div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;display:flex;flex-direction:column">
+      <div style="padding:1.25rem 1.25rem .75rem"><div class="card-title" id="breakdown-title">Clientes &mdash; año completo</div></div>
+      <div class="bk-header"><span>Cliente</span><span style="text-align:right">Aporte</span><span></span></div>
+      <div id="breakdown-list" style="overflow-y:auto;flex:1;max-height:310px"></div>
+      <div class="bk-total"><span class="bk-name">Total</span><span class="bk-amt" id="bt-amt">-</span><span></span></div>
+    </div>
+  </div>
+  <div class="month-detail-grid" id="month-detail" style="display:none">
+    <div class="md-card"><div class="md-lbl">Ingresos del mes</div><div class="md-val" id="md-rev">-</div><div class="md-sub" id="md-rev-s">-</div></div>
+    <div class="md-card"><div class="md-lbl">Costos del mes</div><div class="md-val neg" id="md-cost">-</div><div class="md-sub">Estructura base</div></div>
+    <div class="md-card"><div class="md-lbl">Resultado del mes</div><div class="md-val" id="md-profit">-</div><div class="md-sub" id="md-margin">-</div></div>
+  </div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page" id="p2">
+  <div class="hint-banner">Ajusta los controles y <strong>&nbsp;baja al final de la pagina&nbsp;</strong> para ver el resultado final del ejercicio.</div>
+  <div class="sim-layout">
+    <div class="panel">
+      <div class="info-blue"><strong>Base:</strong> escenario A+H+M completo. Cada costo reduce la ganancia final.</div>
+      <div class="psec-first">1 &middot; PM de apoyo a Diana</div>
+      <div class="sl-row">
+        <div class="sl-hdr"><span class="sl-name">PM en Miami</span><span class="sl-val" id="v-pm">$0</span></div>
+        <div class="sl-hint">Contratacion puntual</div>
+        <input type="range" min="0" max="15000" step="500" value="0" id="s-pm" oninput="updateSim()">
+      </div>
+      <div class="psec">Viaje Sofia Corsini</div>
+      <div class="sl-row">
+        <div class="sl-hdr"><span class="sl-name">Duracion</span><span class="sl-val" id="v-days">45 dias</span></div>
+        <div class="sl-hint">May&ndash;Jul. Vuelo fijo $1,000.</div>
+        <input type="range" min="30" max="75" step="5" value="45" id="s-days" oninput="updateSim()">
+      </div>
+      <div class="travel-card">
+        <div class="travel-row"><span>Vuelo</span><span id="t-vuelo">$1,000</span></div>
+        <div class="travel-row"><span>Hospedaje ($/dia)</span><input type="number" id="t-hosp-rate" value="83" min="0" step="1" class="t-inp" oninput="updateSim()"></div>
+        <div class="travel-row"><span>Viaticos ($/dia)</span><input type="number" id="t-viat-rate" value="60" min="0" step="1" class="t-inp" oninput="updateSim()"></div>
+        <div class="travel-row"><span>Hospedaje total</span><span id="t-hospedaje">-</span></div>
+        <div class="travel-row"><span>Viaticos total</span><span id="t-viaticos">-</span></div>
+        <div class="travel-row"><span>Total estimado</span><span id="t-estimated">-</span></div>
+        <div class="travel-row"><span style="font-weight:600;color:var(--text)">Total a confirmar</span><input type="number" id="t-manual" placeholder="ingresar" min="0" step="100" class="t-inp-wide" oninput="updateSim()"></div>
+      </div>
+      <div class="psec">2 &middot; Diana</div>
+      <div class="sl-row">
+        <div class="sl-hdr"><span class="sl-name">Aumento salarial</span><span class="sl-val" id="v-diana">$0/mes</span></div>
+        <div class="sl-hint">x2 meses FIFA (Jun&ndash;Jul)</div>
+        <input type="range" min="0" max="5000" step="100" value="0" id="s-diana" oninput="updateSim()">
+      </div>
+      <div class="sl-row">
+        <div class="sl-hdr"><span class="sl-name">Incorporacion post-FIFA</span><span class="sl-val" id="v-diana-post">$0/mes</span></div>
+        <div class="sl-hint">Nuevo integrante x5 meses (Ago&ndash;Dic)</div>
+        <input type="range" min="0" max="8000" step="500" value="0" id="s-diana-post" oninput="updateSim()">
+      </div>
+      <div class="psec">3 &middot; Apoyo a Fer</div>
+      <div class="sl-row">
+        <div class="sl-hdr"><span class="sl-name">Fer &mdash; Media Ops</span><span class="sl-val" id="v-fer">$16,000</span></div>
+        <div class="sl-hint">Base 16k. Max 31k (equipo + Airbnb)</div>
+        <input type="range" min="0" max="31000" step="500" value="16000" id="s-fer" oninput="updateSim()">
+      </div>
+      <div class="sl-row">
+        <div class="sl-hdr"><span class="sl-name">Editores</span><span class="sl-val" id="v-edit">$5,000</span></div>
+        <div class="sl-hint">Fan Fest</div>
+        <input type="range" min="0" max="10000" step="500" value="5000" id="s-edit" oninput="updateSim()">
+      </div>
+      <div class="sl-row">
+        <div class="sl-hdr"><span class="sl-name">Community Manager</span><span class="sl-val" id="v-cm">$10,000</span></div>
+        <div class="sl-hint">Social media</div>
+        <input type="range" min="0" max="15000" step="500" value="10000" id="s-cm" oninput="updateSim()">
+      </div>
+      <div class="psec">4 &middot; Aumento socias</div>
+      <div class="sl-row">
+        <div class="sl-hdr"><span class="sl-name">Por socia / mes</span><span class="sl-val" id="v-socias">$0</span></div>
+        <div class="sl-hint">x3 socias x6 meses &mdash; total: <strong id="v-socias-total" style="color:var(--text)">$0</strong></div>
+        <input type="range" min="0" max="5000" step="500" value="0" id="s-socias" oninput="updateSim()">
+      </div>
+      <div class="psec">5 &middot; Saul + Sofi Picon</div>
+      <div class="sl-row">
+        <div class="sl-hdr"><span class="sl-name">Saul</span><span class="sl-val" id="v-saul">$3,500/mes</span></div>
+        <div class="sl-hint">x6 meses restantes</div>
+        <input type="range" min="0" max="10000" step="500" value="3500" id="s-saul" oninput="updateSim()">
+      </div>
+      <div class="sl-row">
+        <div class="sl-hdr"><span class="sl-name">Indemnizacion Sofi Picon</span><span class="sl-val" id="v-indem">$0</span></div>
+        <div class="sl-hint">Pago unico &mdash; a negociar</div>
+        <input type="range" min="0" max="20000" step="500" value="0" id="s-indem" oninput="updateSim()">
+      </div>
+      <div class="psec">6 &middot; Comision Janelle <span class="stag stag-pct">% ganancia FIFA</span></div>
+      <div class="info-box">Sobre ganancia neta de Fan Fest, Fan Fest CC, Content Capture SOW2 y Fiesta VIP.<br>Base: <strong id="jan-base-display">-</strong> &nbsp;|&nbsp; Comision: <strong id="jan-result-display" style="color:var(--red)">-</strong></div>
+      <div class="sl-row">
+        <div class="sl-hdr"><span class="sl-name">Porcentaje</span><span class="sl-val" id="v-jan">10%</span></div>
+        <div class="sl-hint">Sobre ganancia, no sobre billing</div>
+        <input type="range" min="0" max="15" step="1" value="10" id="s-jan" oninput="updateSim()">
+      </div>
+      <div class="psec">7 &middot; Otros gastos <span class="stag stag-new">a completar</span></div>
+      <div class="sl-hint" style="margin-bottom:10px">Esther/Ramiro, Bruno y otros que surjan.</div>
+      <div id="extra-costs-list"></div>
+      <button class="add-btn" onclick="addExtraCost()">+ Agregar gasto</button>
+    </div>
+    <div class="impact-card">
+      <div class="card-title">Impacto acumulado por decision</div>
+      <div id="impact-breakdown-list"><div style="font-size:12px;color:var(--muted);padding:20px 0;text-align:center">Mueve los controles para ver el impacto.</div></div>
+    </div>
+  </div>
+  <div class="result-footer">
+    <div>
+      <div class="rf-lbl">Ganancia neta final del ejercicio</div>
+      <div class="rf-val" id="s-net-profit">-</div>
+      <div class="rf-sub" id="s-margin-sub">-</div>
+    </div>
+    <div class="rf-right">Resultado sobre escenario A+H+M descontando todos los costos configurados arriba.</div>
+  </div>
+  <div class="alert-note" id="impact-note" style="display:none"></div>
+</div>
+
+<!-- PAGE 3 -->
+<div class="page" id="p3">
+  <div class="p3-projects">
+    <div class="scene-title">Proyectos FIFA activos &mdash; sincronizados con Resultado por mes</div>
+    <div class="p3-proj-grid" id="p3-proj-grid"></div>
+    <div class="scene-summary" id="p3-proj-summary">Activa proyectos FIFA en la pestana Resultado por mes para verlos aqui.</div>
+  </div>
+  <div class="p3-layout">
+    <div class="cost-panel">
+      <div class="card-title" style="margin-bottom:4px">Costos imputables a FIFA</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:1.25rem;line-height:1.6">Ajusta el % de cada costo que corresponde a los proyectos FIFA seleccionados.</div>
+
+      <div class="cost-cat">
+        <div class="cost-cat-title">1 &middot; PM apoyo Diana + Viaje Sofia</div>
+        <div class="cost-item">
+          <div><div class="ci-name">PM en Miami</div><div class="ci-amt" id="p3-amt-pm">$0</div></div>
+          <div class="ci-pct-wrap"><span class="ci-pct-val" id="p3-pct-val-pm">100%</span><input type="range" class="ci-pct-slider" min="0" max="100" step="5" value="100" id="p3-pct-pm" oninput="updateP3()"></div>
+          <div class="ci-fifa-amt" id="p3-fifa-pm">$0</div>
+        </div>
+        <div class="cost-item">
+          <div><div class="ci-name">Viaje Sofia Corsini</div><div class="ci-amt" id="p3-amt-travel">$0</div></div>
+          <div class="ci-pct-wrap"><span class="ci-pct-val" id="p3-pct-val-travel">100%</span><input type="range" class="ci-pct-slider" min="0" max="100" step="5" value="100" id="p3-pct-travel" oninput="updateP3()"></div>
+          <div class="ci-fifa-amt" id="p3-fifa-travel">$0</div>
+        </div>
+      </div>
+      <div class="cost-cat">
+        <div class="cost-cat-title">2 &middot; Diana</div>
+        <div class="cost-item">
+          <div><div class="ci-name">Aumento salarial</div><div class="ci-amt" id="p3-amt-diana">$0</div></div>
+          <div class="ci-pct-wrap"><span class="ci-pct-val" id="p3-pct-val-diana">100%</span><input type="range" class="ci-pct-slider" min="0" max="100" step="5" value="100" id="p3-pct-diana" oninput="updateP3()"></div>
+          <div class="ci-fifa-amt" id="p3-fifa-diana">$0</div>
+        </div>
+        <div class="cost-item">
+          <div><div class="ci-name">Incorporacion post-FIFA</div><div class="ci-amt" id="p3-amt-dpost">$0</div></div>
+          <div class="ci-pct-wrap"><span class="ci-pct-val" id="p3-pct-val-dpost">50%</span><input type="range" class="ci-pct-slider" min="0" max="100" step="5" value="50" id="p3-pct-dpost" oninput="updateP3()"></div>
+          <div class="ci-fifa-amt" id="p3-fifa-dpost">$0</div>
+        </div>
+      </div>
+      <div class="cost-cat">
+        <div class="cost-cat-title">3 &middot; Apoyo a Fer</div>
+        <div class="cost-item">
+          <div><div class="ci-name">Fer &mdash; Media Ops</div><div class="ci-amt" id="p3-amt-fer">$0</div></div>
+          <div class="ci-pct-wrap"><span class="ci-pct-val" id="p3-pct-val-fer">100%</span><input type="range" class="ci-pct-slider" min="0" max="100" step="5" value="100" id="p3-pct-fer" oninput="updateP3()"></div>
+          <div class="ci-fifa-amt" id="p3-fifa-fer">$0</div>
+        </div>
+        <div class="cost-item">
+          <div><div class="ci-name">Editores</div><div class="ci-amt" id="p3-amt-edit">$0</div></div>
+          <div class="ci-pct-wrap"><span class="ci-pct-val" id="p3-pct-val-edit">100%</span><input type="range" class="ci-pct-slider" min="0" max="100" step="5" value="100" id="p3-pct-edit" oninput="updateP3()"></div>
+          <div class="ci-fifa-amt" id="p3-fifa-edit">$0</div>
+        </div>
+        <div class="cost-item">
+          <div><div class="ci-name">Community Manager</div><div class="ci-amt" id="p3-amt-cm">$0</div></div>
+          <div class="ci-pct-wrap"><span class="ci-pct-val" id="p3-pct-val-cm">100%</span><input type="range" class="ci-pct-slider" min="0" max="100" step="5" value="100" id="p3-pct-cm" oninput="updateP3()"></div>
+          <div class="ci-fifa-amt" id="p3-fifa-cm">$0</div>
+        </div>
+      </div>
+      <div class="cost-cat">
+        <div class="cost-cat-title">4 &middot; Aumento socias</div>
+        <div class="cost-item">
+          <div><div class="ci-name">x3 socias x6 meses</div><div class="ci-amt" id="p3-amt-socias">$0</div></div>
+          <div class="ci-pct-wrap"><span class="ci-pct-val" id="p3-pct-val-socias">40%</span><input type="range" class="ci-pct-slider" min="0" max="100" step="5" value="40" id="p3-pct-socias" oninput="updateP3()"></div>
+          <div class="ci-fifa-amt" id="p3-fifa-socias">$0</div>
+        </div>
+      </div>
+      <div class="cost-cat">
+        <div class="cost-cat-title">5 &middot; Saul + Sofi Picon</div>
+        <div class="cost-item">
+          <div><div class="ci-name">Saul</div><div class="ci-amt" id="p3-amt-saul">$0</div></div>
+          <div class="ci-pct-wrap"><span class="ci-pct-val" id="p3-pct-val-saul">50%</span><input type="range" class="ci-pct-slider" min="0" max="100" step="5" value="50" id="p3-pct-saul" oninput="updateP3()"></div>
+          <div class="ci-fifa-amt" id="p3-fifa-saul">$0</div>
+        </div>
+        <div class="cost-item">
+          <div><div class="ci-name">Indem. Sofi Picon</div><div class="ci-amt" id="p3-amt-indem">$0</div></div>
+          <div class="ci-pct-wrap"><span class="ci-pct-val" id="p3-pct-val-indem">0%</span><input type="range" class="ci-pct-slider" min="0" max="100" step="5" value="0" id="p3-pct-indem" oninput="updateP3()"></div>
+          <div class="ci-fifa-amt" id="p3-fifa-indem">$0</div>
+        </div>
+      </div>
+      <div class="cost-cat">
+        <div class="cost-cat-title">6 &middot; Comision Janelle</div>
+        <div class="cost-item">
+          <div><div class="ci-name">Comision FIFA</div><div class="ci-amt" id="p3-amt-janelle">$0</div></div>
+          <div class="ci-pct-wrap"><span class="ci-pct-val" id="p3-pct-val-janelle">100%</span><input type="range" class="ci-pct-slider" min="0" max="100" step="5" value="100" id="p3-pct-janelle" oninput="updateP3()"></div>
+          <div class="ci-fifa-amt" id="p3-fifa-janelle">$0</div>
+        </div>
+      </div>
+      <div class="cost-cat">
+        <div class="cost-cat-title">7 &middot; Otros gastos</div>
+        <div class="cost-item">
+          <div><div class="ci-name">Gastos adicionales</div><div class="ci-amt" id="p3-amt-extra">$0</div></div>
+          <div class="ci-pct-wrap"><span class="ci-pct-val" id="p3-pct-val-extra">50%</span><input type="range" class="ci-pct-slider" min="0" max="100" step="5" value="50" id="p3-pct-extra" oninput="updateP3()"></div>
+          <div class="ci-fifa-amt" id="p3-fifa-extra">$0</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="fifa-kpi-grid">
+        <div class="kpi"><div class="kpi-lbl">Ingresos FIFA</div><div class="kpi-val pos" id="p3-k-rev">$0</div><div class="kpi-sub" id="p3-k-rev-s">proyectos activos</div></div>
+        <div class="kpi"><div class="kpi-lbl">Costos imputados</div><div class="kpi-val neg" id="p3-k-costs">$0</div><div class="kpi-sub">% aplicado a FIFA</div></div>
+        <div class="kpi"><div class="kpi-lbl">Ganancia neta FIFA</div><div class="kpi-val" id="p3-k-net">$0</div><div class="kpi-sub" id="p3-k-margin">Margen: 0%</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:1.25rem">De donde viene y a donde va</div>
+        <div id="p3-waterfall"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+var MO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+var COSTS = [56358,71969,69448,71500,71500,77000,71500,63000,63000,63000,63000,68500];
+var CLIENTS_A = [
+  {name:'P&G Braun',            dept:'Media',    data:[5043,5500,5759,5500,5500,5500,0,0,0,0,0,0]},
+  {name:'AXA Argentina',        dept:'Media',    data:[15091,15129,3150,0,0,0,0,0,0,0,0,0]},
+  {name:'AXA Argentina',        dept:'Creative', data:[10893,11518,0,0,0,0,0,0,0,0,0,0]},
+  {name:'AXA Chile',            dept:'Media',    data:[3445,3350,-596,0,0,0,0,0,0,0,0,0]},
+  {name:'AXA Chile',            dept:'Creative', data:[5425,5883,0,0,0,0,0,0,0,0,0,0]},
+  {name:'AXA Colombia',         dept:'Media',    data:[0,0,2720,2720,2720,2720,2720,2720,2720,2720,2720,2720]},
+  {name:'AXA Colombia',         dept:'Creative', data:[0,0,1763,1763,1763,1763,1763,1763,1763,1763,1763,1763]},
+  {name:'Concacaf Kick-Off',    dept:'Creative', data:[3770,3773,3950,3950,0,0,0,0,0,0,0,0]},
+  {name:'Concacaf TikTok',      dept:'Creative', data:[3250,2683,1619,0,0,0,0,0,0,0,0,0]},
+  {name:'Concacaf CDP',         dept:'Media',    data:[2500,2500,2500,2500,2500,2500,2500,2500,2500,2500,2500,2500]},
+  {name:'Concacaf House',       dept:'Media',    data:[0,0,0,0,1500,0,0,0,0,0,0,0]},
+  {name:'Televisa',             dept:'Media',    data:[0,3600,3600,3600,3800,0,0,0,0,0,0,0]},
+  {name:'Fulbo Ecommerce',      dept:'Media',    data:[5995,5879,5917,6000,6000,4000,4000,4000,4000,4000,4000,4000]},
+  {name:'ArcMental',            dept:'Media',    data:[750,2640,1760,750,750,750,750,750,750,750,750,750]},
+  {name:'ArcMental',            dept:'Creative', data:[3337,1454,2038,3450,3450,3450,3450,3450,3450,3450,3450,3450]},
+  {name:'FIFA Miami Committee', dept:'Creative', data:[0,51693,43477,40000,40000,40000,40000,0,0,0,0,0]},
+  {name:'FIFA City Dressing',   dept:'Media',    data:[0,0,0,0,25450,25450,25450,25450,0,0,0,0]},
+  {name:'FIFA Video Production',dept:'Creative', data:[0,0,0,0,15000,0,0,0,0,0,0,0]},
+  {name:'FIFA Fiesta VIP',      dept:'Creative', data:[0,0,0,0,10000,0,0,0,0,0,0,0]},
+  {name:'SoccerEx',             dept:'Media',    data:[0,0,0,0,0,25000,0,0,0,0,0,0]},
+  {name:'Adecco GA4',           dept:'Media',    data:[0,0,0,0,0,0,5000,0,0,0,0,0]},
+  {name:'Verben Programmatic',  dept:'Media',    data:[0,0,0,0,0,0,0,20000,0,0,0,0]},
+  {name:'BSCI Creative',        dept:'Creative', data:[0,0,0,0,0,0,5639,0,0,0,0,0]},
+  {name:'BSCI Media',           dept:'Media',    data:[0,0,0,0,0,0,9441,6500,0,0,0,0]}
+];
+var OPTIONAL = [
+  {id:'p1', label:'P&G Braun continuacion',       sublabel:'Media - Mid',    prob:'M', client:{name:'P&G Braun cont',      dept:'Media',    data:[0,0,0,0,0,5500,5500,5500,5500,5500,5500,0]}},
+  {id:'p2', label:'Concacaf 41 Diamonds',          sublabel:'Creative - Mid', prob:'M', client:{name:'Concacaf 41 Diamonds',dept:'Creative', data:[0,0,0,0,4750,4750,4750,0,0,0,0,0]}},
+  {id:'p3', label:'Concacaf House Creative',        sublabel:'Creative - Alta',prob:'H', client:{name:'Concacaf House Cr',   dept:'Creative', data:[0,0,0,0,0,0,0,0,0,0,0,0]}},
+  {id:'p4', label:'Concacaf House Media',           sublabel:'Media - Alta',   prob:'H', client:{name:'Concacaf House Me',   dept:'Media',    data:[0,0,0,0,0,5850,5850,0,0,0,0,0]}},
+  {id:'p5', label:'Concacaf Survey Creative',       sublabel:'Creative - Alta',prob:'H', client:{name:'Concacaf Survey Cr',  dept:'Creative', data:[0,0,0,0,0,0,0,0,0,0,0,0]}},
+  {id:'p6', label:'Concacaf Survey Media',          sublabel:'Media - Alta',   prob:'H', client:{name:'Concacaf Survey Me',  dept:'Media',    data:[0,0,0,0,1500,0,0,0,0,0,0,0]}},
+  {id:'p7', label:'FIFA City Dressing Broward',     sublabel:'Media - Alta',   prob:'H', client:{name:'City Dressing Broward',dept:'Media',   data:[0,0,0,0,0,0,0,10800,0,0,0,0]}},
+  {id:'p8', label:'FIFA Fan Fest',                  sublabel:'Media - Alta',   prob:'H', client:{name:'FIFA Fan Fest',       dept:'Media',    data:[0,0,0,0,0,13274,0,0,0,0,0,0]}},
+  {id:'p9', label:'FIFA Fan Fest Other',            sublabel:'Creative - Alta',prob:'H', client:{name:'FIFA Fan Fest Other', dept:'Creative', data:[0,0,0,0,0,0,0,0,0,0,0,0]}},
+  {id:'p10',label:'FIFA Fan Fest Content Capture',  sublabel:'Creative - Alta',prob:'H', client:{name:'FIFA Fan Fest CC',    dept:'Creative', data:[0,0,0,0,0,37450,37450,0,0,0,0,0]}},
+  {id:'p11',label:'FIFA Content Capture SOW 2',     sublabel:'Creative - Mid', prob:'M', client:{name:'FIFA CC SOW2',        dept:'Creative', data:[0,0,0,0,0,28500,0,5500,0,0,0,5500]}},
+  {id:'p12',label:'Verben Partnership Programmatic',sublabel:'Media - Alta',   prob:'H', client:{name:'Verben Programmatic H',dept:'Media',   data:[0,0,0,0,0,0,0,0,10800,0,0,0]}}
+];
+var JANELLE_NAMES = ['FIFA Fiesta VIP','FIFA Fan Fest','FIFA Fan Fest Other','FIFA Fan Fest CC','FIFA CC SOW2'];
+var FIFA_P3_IDS   = ['p7','p8','p9','p10','p11'];
+var COLORS = ['#22c98a','#5b9cf6','#f5a623','#f05c5c','#7c6af7','#38bdf8','#a78bfa','#34d399','#fb923c','#f472b6','#60a5fa','#4ade80','#facc15','#c084fc','#fb7185','#67e8f9','#86efac','#fda4af'];
+var activeSet = {};
+var selMonth = -1;
+var cMain = null;
+var extraCostCount = 0;
+
+function ge(id) { return document.getElementById(id); }
+
+function fmt(v, k) {
+  var abs = Math.abs(Math.round(v));
+  var s = (k && abs >= 1000) ? ('$' + Math.round(abs/1000) + 'K') : ('$' + abs.toLocaleString('en-US'));
+  return v < 0 ? ('-' + s) : s;
+}
+
+function showPage(id, btn) {
+  var pages = document.querySelectorAll('.page');
+  for (var i = 0; i < pages.length; i++) pages[i].classList.remove('active');
+  var tabs = document.querySelectorAll('.tab');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+  ge(id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'p2') updateSim();
+  if (id === 'p3') updateP3();
+}
+
+function activeClients() {
+  var list = CLIENTS_A.slice();
+  for (var i = 0; i < OPTIONAL.length; i++) { if (activeSet[OPTIONAL[i].id]) list.push(OPTIONAL[i].client); }
+  return list;
+}
+function allClients() {
+  var list = CLIENTS_A.slice();
+  for (var i = 0; i < OPTIONAL.length; i++) list.push(OPTIONAL[i].client);
+  return list;
+}
+function monthRevenue(m) {
+  var cl = activeClients(), s = 0;
+  for (var i = 0; i < cl.length; i++) s += (cl[i].data[m] || 0);
+  return s;
+}
+function annualRevenue() {
+  var arr = [];
+  for (var i = 0; i < 12; i++) arr.push(monthRevenue(i));
+  return arr;
+}
+function simBaseRevenue() {
+  var list = allClients(), arr = [];
+  for (var m = 0; m < 12; m++) {
+    var s = 0;
+    for (var i = 0; i < list.length; i++) s += (list[i].data[m] || 0);
+    arr.push(s);
+  }
+  return arr;
+}
+function janelleBase() {
+  var list = allClients(), s = 0;
+  for (var i = 0; i < list.length; i++) {
+    var found = false;
+    for (var j = 0; j < JANELLE_NAMES.length; j++) { if (list[i].name === JANELLE_NAMES[j]) { found = true; break; } }
+    if (found) { for (var m = 0; m < 12; m++) s += (list[i].data[m] || 0); }
+  }
+  return s;
+}
+function getExtraTotal() {
+  var rows = document.querySelectorAll('#extra-costs-list .extra-row'), t = 0;
+  for (var i = 0; i < rows.length; i++) {
+    var inp = rows[i].querySelector('input[type=number]');
+    if (inp) t += parseFloat(inp.value) || 0;
+  }
+  return t;
+}
+function addExtraCost() {
+  var id = 'ec' + (extraCostCount++);
+  var div = document.createElement('div'); div.className = 'extra-row'; div.id = id;
+  var t = document.createElement('input'); t.type='text'; t.placeholder='Concepto'; t.className='ei-t'; t.setAttribute('oninput','updateSim()');
+  var n = document.createElement('input'); n.type='number'; n.placeholder='$ monto'; n.min='0'; n.step='100'; n.className='ei-n'; n.setAttribute('oninput','updateSim()');
+  var b = document.createElement('button'); b.textContent='x'; b.className='ei-del';
+  (function(eid){ b.onclick=function(){ var el=ge(eid); if(el) el.parentNode.removeChild(el); updateSim(); }; })(id);
+  div.appendChild(t); div.appendChild(n); div.appendChild(b);
+  ge('extra-costs-list').appendChild(div);
+  updateSim();
+}
+function travelCost(days) {
+  var hr = parseFloat(ge('t-hosp-rate').value) || 83;
+  var vr = parseFloat(ge('t-viat-rate').value) || 60;
+  var vuelo = 1000;
+  return { vuelo:vuelo, hospedaje:Math.round(days*hr), viaticos:Math.round(days*vr), total:vuelo+Math.round(days*hr)+Math.round(days*vr) };
+}
+function computeVarCosts() {
+  var fer    = parseFloat(ge('s-fer').value)    || 0;
+  var edit   = parseFloat(ge('s-edit').value)   || 0;
+  var cm     = parseFloat(ge('s-cm').value)     || 0;
+  var pm     = parseFloat(ge('s-pm').value)     || 0;
+  var diana  = parseFloat(ge('s-diana').value)  || 0;
+  var socias = parseFloat(ge('s-socias').value) || 0;
+  var saul   = parseFloat(ge('s-saul').value)   || 0;
+  var indem  = parseFloat(ge('s-indem').value)  || 0;
+  var days   = parseFloat(ge('s-days').value)   || 45;
+  var manVal = parseFloat(ge('t-manual').value) || 0;
+  var tc = travelCost(days);
+  var travelAmt = manVal > 0 ? manVal : tc.total;
+  var extra = getExtraTotal();
+  var arr = [0,0,0,0,0,0,0,0,0,0,0,0];
+  arr[5] += fer + edit + cm + pm + diana;
+  arr[6] += diana;
+  for (var i = 6; i < 12; i++) arr[i] += socias*3 + saul;
+  arr[6] += indem;
+  var tpm = Math.round(travelAmt/3);
+  arr[4] += tpm; arr[5] += tpm; arr[6] += tpm;
+  arr[5] += extra;
+  return { arr:arr, tc:tc, travelAmt:travelAmt, extra:extra, fer:fer, edit:edit, cm:cm, pm:pm, diana:diana, socias:socias, saul:saul, indem:indem };
+}
+
+function updateSim() {
+  var socias    = parseFloat(ge('s-socias').value)     || 0;
+  var days      = parseFloat(ge('s-days').value)       || 45;
+  var janPct    = (parseFloat(ge('s-jan').value)       || 0) / 100;
+  var dianaPost = parseFloat(ge('s-diana-post').value) || 0;
+  var hospRate  = parseFloat(ge('t-hosp-rate').value)  || 83;
+  var viatRate  = parseFloat(ge('t-viat-rate').value)  || 60;
+  var vc = computeVarCosts();
+
+  ge('v-pm').textContent         = vc.pm     ? fmt(vc.pm)            : '$0';
+  ge('v-diana').textContent      = vc.diana  ? fmt(vc.diana)+'/mes'  : '$0/mes';
+  ge('v-diana-post').textContent = dianaPost ? fmt(dianaPost)+'/mes' : '$0/mes';
+  ge('v-fer').textContent        = fmt(vc.fer);
+  ge('v-edit').textContent       = fmt(vc.edit);
+  ge('v-cm').textContent         = fmt(vc.cm);
+  ge('v-socias').textContent     = socias ? fmt(socias)+'/socia' : '$0';
+  ge('v-socias-total').textContent = fmt(socias*3*6);
+  ge('v-saul').textContent       = fmt(vc.saul)+'/mes';
+  ge('v-indem').textContent      = vc.indem ? fmt(vc.indem) : '$0';
+  ge('v-jan').textContent        = ge('s-jan').value+'%';
+  ge('v-days').textContent       = days+' dias';
+  ge('t-vuelo').textContent      = fmt(vc.tc.vuelo);
+  ge('t-hospedaje').textContent  = fmt(vc.tc.hospedaje);
+  ge('t-viaticos').textContent   = fmt(vc.tc.viaticos);
+  ge('t-estimated').textContent  = fmt(vc.tc.total);
+
+  var R = annualRevenue();
+  var totalRev=0, totalBase=0, totalVCArr=0;
+  for (var i=0; i<12; i++) { totalRev+=R[i]; totalBase+=R[i]-COSTS[i]; totalVCArr+=vc.arr[i]; }
+  var dianaPostTotal = dianaPost*5;
+  var totalVC = totalVCArr + dianaPostTotal;
+  var jBase   = janelleBase();
+  var janAmt  = jBase>0 ? Math.round(jBase*janPct) : 0;
+  var net     = totalBase - totalVC - janAmt;
+  var margin  = totalRev>0 ? Math.round(net/totalRev*100) : 0;
+
+  ge('jan-base-display').textContent   = fmt(jBase, true);
+  ge('jan-result-display').textContent = fmt(janAmt);
+
+  var sp = ge('s-net-profit');
+  sp.textContent = fmt(Math.round(net), true);
+  sp.className   = 'rf-val ' + (net>=0 ? 'pos' : 'neg');
+  ge('s-margin-sub').textContent = 'Margen: '+margin+'%  |  Costos variables: -'+fmt(Math.round(totalVC+janAmt), true);
+
+  var ni = ge('impact-note');
+  if (net < 0) { ni.style.display='block'; ni.textContent='Los costos variables generan un deficit de '+fmt(Math.abs(Math.round(net)),true)+' sobre el escenario base.'; }
+  else ni.style.display='none';
+
+  var noteStr = days+' dias | $'+hospRate+'/dia hosp | $'+viatRate+'/dia viat';
+  var groups = [
+    {label:'1 - PM apoyo Diana + Viaje Sofia', items:[
+      {name:'PM apoyo Diana',      note:'pago unico',   val:vc.pm},
+      {name:'Viaje Sofia Corsini', note:noteStr,        val:vc.travelAmt}
+    ]},
+    {label:'2 - Diana', items:[
+      {name:'Aumento salarial',       note:'x2 meses FIFA',    val:vc.diana*2},
+      {name:'Incorporacion post-FIFA',note:'x5 meses Ago-Dic', val:dianaPostTotal}
+    ]},
+    {label:'3 - Apoyo a Fer', items:[
+      {name:'Fer - Media Ops',   note:'', val:vc.fer},
+      {name:'Editores',          note:'', val:vc.edit},
+      {name:'Community Manager', note:'', val:vc.cm}
+    ]},
+    {label:'4 - Aumento socias', items:[
+      {name:'x3 socias x6 meses', note:fmt(socias)+'/socia/mes', val:socias*3*6}
+    ]},
+    {label:'5 - Saul + Sofi Picon', items:[
+      {name:'Saul',              note:'x6 meses',   val:vc.saul*6},
+      {name:'Indem. Sofi Picon', note:'pago unico', val:vc.indem}
+    ]},
+    {label:'6 - Comision Janelle', items:[
+      {name:'Comision '+ge('s-jan').value+'%', note:'base FIFA '+fmt(jBase,true), val:janAmt}
+    ]},
+    {label:'7 - Otros gastos', items:[
+      {name:'Gastos adicionales', note:'', val:vc.extra}
+    ]}
+  ];
+
+  var running=0, cumulative=[];
+  for (var g=0; g<groups.length; g++) {
+    var gt=0;
+    for (var x=0; x<groups[g].items.length; x++) gt+=groups[g].items[x].val;
+    running+=gt;
+    cumulative.push({label:groups[g].label, items:groups[g].items, groupTotal:gt, running:running});
+  }
+  renderImpact(cumulative, running>0?running:1, totalVC, janAmt);
+}
+
+function renderImpact(groups, maxR, totalVC, janAmt) {
+  var bl = ge('impact-breakdown-list');
+  bl.innerHTML = '';
+  var anyActive = false;
+  for (var g=0; g<groups.length; g++) {
+    var grp = groups[g];
+    if (grp.groupTotal === 0) continue;
+    anyActive = true;
+    var wrap = document.createElement('div'); wrap.className='imp-group-wrap';
+    var title = document.createElement('div'); title.className='imp-group-title'; title.textContent=grp.label;
+    wrap.appendChild(title);
+    for (var x=0; x<grp.items.length; x++) {
+      var it = grp.items[x];
+      if (it.val===0) continue;
+      var row = document.createElement('div'); row.className='imp-sub-row';
+      var nw = document.createElement('div');
+      var nm = document.createElement('div'); nm.className='imp-sub-name'; nm.textContent=it.name; nw.appendChild(nm);
+      if (it.note) { var nt=document.createElement('div'); nt.className='imp-sub-note'; nt.textContent=it.note; nw.appendChild(nt); }
+      var bw = document.createElement('div'); bw.className='imp-bar-wrap';
+      var bar = document.createElement('div');
+      bar.style.cssText = 'width:'+Math.round(it.val/maxR*100)+'%;height:100%;background:rgba(240,92,92,.5);border-radius:3px';
+      bw.appendChild(bar);
+      var am = document.createElement('div');
+      am.style.cssText = 'font-size:11px;font-weight:600;color:var(--red);text-align:right';
+      am.textContent = '-'+fmt(it.val);
+      row.appendChild(nw); row.appendChild(bw); row.appendChild(am);
+      wrap.appendChild(row);
+    }
+    var cumPct = Math.round(grp.running/maxR*100);
+    var cumRow = document.createElement('div'); cumRow.className='imp-cum-row';
+    var cl = document.createElement('div'); cl.className='imp-cum-lbl'; cl.textContent='Acumulado';
+    var cbw = document.createElement('div'); cbw.className='imp-bar-wrap';
+    var cb = document.createElement('div');
+    cb.style.cssText = 'width:'+cumPct+'%;height:100%;background:var(--red);border-radius:3px';
+    cbw.appendChild(cb);
+    var ca = document.createElement('div'); ca.className='imp-cum-amt'; ca.textContent='-'+fmt(grp.running);
+    cumRow.appendChild(cl); cumRow.appendChild(cbw); cumRow.appendChild(ca);
+    wrap.appendChild(cumRow);
+    bl.appendChild(wrap);
+  }
+  if (!anyActive) {
+    var em = document.createElement('div');
+    em.style.cssText = 'font-size:12px;color:var(--muted);padding:20px 0;text-align:center';
+    em.textContent = 'Mueve los controles para ver el impacto.';
+    bl.appendChild(em);
+  } else {
+    var tot = document.createElement('div'); tot.className='imp-total';
+    var tl = document.createElement('span'); tl.textContent='Total costos variables';
+    var ta = document.createElement('span'); ta.textContent='-'+fmt(Math.round(totalVC+janAmt),true);
+    tot.appendChild(tl); tot.appendChild(ta); bl.appendChild(tot);
+  }
+}
+
+function updateP3() {
+  var vc        = computeVarCosts();
+  var dianaPost = parseFloat(ge('s-diana-post').value) || 0;
+  var socias    = parseFloat(ge('s-socias').value)     || 0;
+  var janPct    = (parseFloat(ge('s-jan').value)       || 0) / 100;
+  var jBase     = janelleBase();
+  var janAmt    = jBase>0 ? Math.round(jBase*janPct) : 0;
+  var extra     = getExtraTotal();
+
+  var RAW = [
+    {key:'pm',      raw:vc.pm,         pctId:'p3-pct-pm',      amtId:'p3-amt-pm',      fifaId:'p3-fifa-pm',      pctValId:'p3-pct-val-pm'},
+    {key:'travel',  raw:vc.travelAmt,  pctId:'p3-pct-travel',  amtId:'p3-amt-travel',  fifaId:'p3-fifa-travel',  pctValId:'p3-pct-val-travel'},
+    {key:'diana',   raw:vc.diana*2,    pctId:'p3-pct-diana',   amtId:'p3-amt-diana',   fifaId:'p3-fifa-diana',   pctValId:'p3-pct-val-diana'},
+    {key:'dpost',   raw:dianaPost*5,   pctId:'p3-pct-dpost',   amtId:'p3-amt-dpost',   fifaId:'p3-fifa-dpost',   pctValId:'p3-pct-val-dpost'},
+    {key:'fer',     raw:vc.fer,        pctId:'p3-pct-fer',     amtId:'p3-amt-fer',     fifaId:'p3-fifa-fer',     pctValId:'p3-pct-val-fer'},
+    {key:'edit',    raw:vc.edit,       pctId:'p3-pct-edit',    amtId:'p3-amt-edit',    fifaId:'p3-fifa-edit',    pctValId:'p3-pct-val-edit'},
+    {key:'cm',      raw:vc.cm,         pctId:'p3-pct-cm',      amtId:'p3-amt-cm',      fifaId:'p3-fifa-cm',      pctValId:'p3-pct-val-cm'},
+    {key:'socias',  raw:socias*3*6,    pctId:'p3-pct-socias',  amtId:'p3-amt-socias',  fifaId:'p3-fifa-socias',  pctValId:'p3-pct-val-socias'},
+    {key:'saul',    raw:vc.saul*6,     pctId:'p3-pct-saul',    amtId:'p3-amt-saul',    fifaId:'p3-fifa-saul',    pctValId:'p3-pct-val-saul'},
+    {key:'indem',   raw:vc.indem,      pctId:'p3-pct-indem',   amtId:'p3-amt-indem',   fifaId:'p3-fifa-indem',   pctValId:'p3-pct-val-indem'},
+    {key:'janelle', raw:janAmt,        pctId:'p3-pct-janelle', amtId:'p3-amt-janelle', fifaId:'p3-fifa-janelle', pctValId:'p3-pct-val-janelle'},
+    {key:'extra',   raw:extra,         pctId:'p3-pct-extra',   amtId:'p3-amt-extra',   fifaId:'p3-fifa-extra',   pctValId:'p3-pct-val-extra'}
+  ];
+
+  var LABELS = {pm:'PM apoyo Diana',travel:'Viaje Sofia Corsini',diana:'Aumento Diana',dpost:'Incorporacion post-FIFA',fer:'Fer - Media Ops',edit:'Editores',cm:'Community Manager',socias:'Aumento socias',saul:'Saul',indem:'Indem. Sofi Picon',janelle:'Comision Janelle',extra:'Otros gastos'};
+
+  var totalFifaCosts = 0;
+  var costLines = [];
+
+  for (var i=0; i<RAW.length; i++) {
+    var r = RAW[i];
+    var pctEl = ge(r.pctId);
+    var pct = pctEl ? (parseFloat(pctEl.value)||0)/100 : 0;
+    var fifaAmt = Math.round(r.raw * pct);
+    totalFifaCosts += fifaAmt;
+    var elA = ge(r.amtId);     if (elA)  elA.textContent  = fmt(r.raw);
+    var elP = ge(r.pctValId);  if (elP)  elP.textContent  = Math.round(pct*100)+'%';
+    var elF = ge(r.fifaId);    if (elF)  elF.textContent  = fifaAmt>0 ? ('-'+fmt(fifaAmt)) : '$0';
+    if (fifaAmt > 0) costLines.push({label:LABELS[r.key], val:fifaAmt});
+  }
+
+  var activeProjs = [], fifaRev = 0;
+  for (var i=0; i<FIFA_P3_IDS.length; i++) {
+    var opt = null;
+    for (var j=0; j<OPTIONAL.length; j++) { if (OPTIONAL[j].id===FIFA_P3_IDS[i]) { opt=OPTIONAL[j]; break; } }
+    if (!opt) continue;
+    var isActive = !!activeSet[opt.id];
+    var projRev = 0;
+    for (var m=0; m<12; m++) projRev += (opt.client.data[m]||0);
+    activeProjs.push({name:opt.label, active:isActive});
+    if (isActive) fifaRev += projRev;
+  }
+
+  var grid = ge('p3-proj-grid'); grid.innerHTML='';
+  var activeCount = 0;
+  for (var i=0; i<activeProjs.length; i++) {
+    var p = activeProjs[i];
+    if (p.active) activeCount++;
+    var d = document.createElement('div'); d.className='p3-proj-item'+(p.active?' active':'');
+    var dot = document.createElement('div'); dot.className='p3-dot';
+    var sp = document.createElement('span'); sp.textContent=p.name;
+    d.appendChild(dot); d.appendChild(sp); grid.appendChild(d);
+  }
+
+  var ps = ge('p3-proj-summary'); ps.innerHTML='';
+  if (activeCount===0) {
+    ps.textContent = 'Activa proyectos FIFA en Resultado por mes para verlos aqui.';
+  } else {
+    var b = document.createElement('b'); b.style.color='var(--green)';
+    b.textContent = activeCount+' proyecto'+(activeCount>1?'s':'')+' activo'+(activeCount>1?'s':'');
+    ps.appendChild(b);
+    ps.appendChild(document.createTextNode(' | Ingresos: '+fmt(fifaRev,true)));
+  }
+
+  var net    = fifaRev - totalFifaCosts;
+  var margin = fifaRev>0 ? Math.round(net/fifaRev*100) : 0;
+
+  ge('p3-k-rev').textContent   = fmt(fifaRev, true);
+  ge('p3-k-rev-s').textContent = activeCount+' proyecto'+(activeCount>1?'s':'')+' activo'+(activeCount>1?'s':'');
+  ge('p3-k-costs').textContent = fmt(-totalFifaCosts, true);
+  var knet = ge('p3-k-net');
+  knet.textContent = fmt(net, true);
+  knet.className   = 'kpi-val '+(net>=0?'pos':'neg');
+  var km = knet.parentNode; if (km) km.className = 'kpi '+(net>=0?'kpi-pos':'kpi-neg');
+  ge('p3-k-margin').textContent = 'Margen: '+margin+'%';
+
+  var wf = ge('p3-waterfall'); wf.innerHTML='';
+  var maxVal = Math.max(fifaRev, totalFifaCosts, 1);
+
+  function addRow(label, sub, val, isTotal) {
+    var row = document.createElement('div'); row.className='wf-row'+(isTotal?' wf-total':'');
+    var lw = document.createElement('div');
+    var lb = document.createElement('div'); lb.className='wf-lbl'; lb.textContent=label; lw.appendChild(lb);
+    if (sub) { var sl=document.createElement('div'); sl.className='wf-sub'; sl.textContent=sub; lw.appendChild(sl); }
+    var bw = document.createElement('div'); bw.className='wf-bar-wrap';
+    var bar = document.createElement('div');
+    bar.style.cssText = 'width:'+Math.round(Math.abs(val)/maxVal*100)+'%;height:100%;border-radius:4px;background:'+(val>=0?'var(--green)':'var(--red)');
+    bw.appendChild(bar);
+    var av = document.createElement('div'); av.className='wf-amt '+(val>=0?'pos':'neg');
+    av.textContent = (val>=0?'':'-')+fmt(Math.abs(val));
+    row.appendChild(lw); row.appendChild(bw); row.appendChild(av);
+    wf.appendChild(row);
+  }
+
+  addRow('Ingresos FIFA', activeCount+' proyectos activos', fifaRev, false);
+  for (var i=0; i<costLines.length; i++) addRow(costLines[i].label, '', -costLines[i].val, false);
+  if (costLines.length===0) {
+    var em = document.createElement('div');
+    em.style.cssText = 'font-size:12px;color:var(--muted);padding:12px 0';
+    em.textContent = 'Configura los costos en Simulador para verlos aqui.';
+    wf.appendChild(em);
+  }
+  addRow('Ganancia neta FIFA', 'Margen: '+margin+'%', net, true);
+}
+
+function buildToggles() {
+  var grid = ge('toggle-grid');
+  for (var i=0; i<OPTIONAL.length; i++) {
+    (function(opt) {
+      var div = document.createElement('div'); div.className='tog'; div.id='tog-'+opt.id;
+      var chk = document.createElement('div'); chk.className='tog-chk';
+      var mark = document.createElement('span'); mark.className='tog-chk-mark'; mark.textContent='v'; chk.appendChild(mark);
+      var body = document.createElement('div');
+      var nameRow = document.createElement('div'); nameRow.className='tog-name'; nameRow.textContent=opt.label;
+      var tag = document.createElement('span'); tag.className='prob-tag prob-'+opt.prob; tag.textContent=opt.prob==='H'?'Alta':'Media'; nameRow.appendChild(tag);
+      var meta = document.createElement('div'); meta.className='tog-meta'; meta.textContent=opt.sublabel;
+      body.appendChild(nameRow); body.appendChild(meta);
+      div.appendChild(chk); div.appendChild(body);
+      div.onclick = function() { toggleOpt(opt.id); };
+      grid.appendChild(div);
+    })(OPTIONAL[i]);
+  }
+}
+
+function toggleOpt(id) {
+  activeSet[id] = !activeSet[id];
+  var el = ge('tog-'+id); if (el) el.classList.toggle('on', !!activeSet[id]);
+  updateSummary(); update(); updateP3();
+}
+
+function updateSummary() {
+  var on=[], addRev=0;
+  for (var i=0; i<OPTIONAL.length; i++) {
+    if (activeSet[OPTIONAL[i].id]) {
+      on.push(OPTIONAL[i]);
+      for (var m=0; m<12; m++) addRev+=(OPTIONAL[i].client.data[m]||0);
+    }
+  }
+  var el = ge('scene-summary'); el.textContent='';
+  if (!on.length) { el.textContent='Solo proyectos confirmados incluidos.'; return; }
+  var b = document.createElement('b'); b.textContent=on.length+' proyecto'+(on.length>1?'s':'')+' adicional'+(on.length>1?'es':'')+' activado'+(on.length>1?'s':'');
+  el.appendChild(b); el.appendChild(document.createTextNode(' | +'+fmt(addRev)+' en ingresos'));
+}
+
+function selectMonth(m) {
+  selMonth=m;
+  var btns=document.querySelectorAll('.m-btn'); for(var i=0;i<btns.length;i++) btns[i].classList.remove('active');
+  var t=ge(m===-1?'mb-all':'mb-'+m); if(t) t.classList.add('active');
+  renderBreakdown(); renderMonthDetail(); highlightBar();
+}
+
+function renderBreakdown() {
+  ge('breakdown-title').textContent = selMonth===-1 ? 'Clientes - año completo' : 'Clientes - '+MO[selMonth];
+  var cl=activeClients(), rows=[];
+  for (var i=0; i<cl.length; i++) {
+    var amt=0;
+    if (selMonth===-1) { for(var m=0;m<12;m++) amt+=(cl[i].data[m]||0); } else amt=cl[i].data[selMonth]||0;
+    if (amt!==0) rows.push({name:cl[i].name,dept:cl[i].dept,amt:amt,color:COLORS[i%COLORS.length]});
+  }
+  rows.sort(function(a,b){return b.amt-a.amt;});
+  var total=0, max=0;
+  for (var i=0;i<rows.length;i++) { total+=rows[i].amt; if(Math.abs(rows[i].amt)>max) max=Math.abs(rows[i].amt); }
+  if (max===0) max=1;
+  var list=ge('breakdown-list'); list.innerHTML='';
+  for (var i=0; i<rows.length; i++) {
+    var r=rows[i], pct=Math.round(Math.abs(r.amt)/max*100);
+    var d=document.createElement('div'); d.className='bk-row';
+    var nc=document.createElement('div');
+    var nm=document.createElement('div'); nm.className='bk-name'; nm.textContent=r.name; nc.appendChild(nm);
+    var dp=document.createElement('div'); dp.className='bk-dept'; dp.textContent=r.dept; nc.appendChild(dp);
+    var ac=document.createElement('div'); ac.className='bk-amt '+(r.amt>=0?'pos':'neg'); ac.textContent=fmt(r.amt);
+    var bc=document.createElement('div');
+    var bw=document.createElement('div'); bw.className='bk-bar-wrap';
+    var bar=document.createElement('div'); bar.className='bk-bar'; bar.style.width=pct+'%'; bar.style.background=r.amt>=0?r.color:'var(--red)'; bw.appendChild(bar); bc.appendChild(bw);
+    d.appendChild(nc); d.appendChild(ac); d.appendChild(bc); list.appendChild(d);
+  }
+  ge('bt-amt').textContent=fmt(total); ge('bt-amt').className='bk-amt '+(total>=0?'pos':'neg');
+}
+
+function renderMonthDetail() {
+  var md=ge('month-detail');
+  if (selMonth===-1) { md.style.display='none'; return; }
+  md.style.display='grid';
+  var rev=monthRevenue(selMonth), cost=COSTS[selMonth], profit=rev-cost;
+  ge('md-rev').textContent=fmt(rev); ge('md-rev-s').textContent='vs costos '+fmt(cost);
+  ge('md-cost').textContent=fmt(-cost);
+  ge('md-profit').textContent=fmt(profit); ge('md-profit').className='md-val '+(profit>=0?'pos':'neg');
+  ge('md-margin').textContent='Margen: '+(rev>0?Math.round(profit/rev*100):0)+'%';
+}
+
+function highlightBar() {
+  if (!cMain) return;
+  var R=annualRevenue(), bg=[], bd=[];
+  for (var i=0;i<12;i++) {
+    var pos=R[i]>=COSTS[i], hi=(selMonth===-1||i===selMonth);
+    bg.push(pos?(hi?'rgba(34,201,138,.85)':'rgba(34,201,138,.45)'):(hi?'rgba(240,92,92,.8)':'rgba(240,92,92,.4)'));
+    bd.push(pos?'#22c98a':'#f05c5c');
+  }
+  cMain.data.datasets[0].backgroundColor=bg; cMain.data.datasets[0].borderColor=bd; cMain.update('none');
+}
+
+function update() {
+  var R=annualRevenue(), totalRev=0, totalCost=0;
+  for (var i=0;i<12;i++) { totalRev+=R[i]; totalCost+=COSTS[i]; }
+  var totalProfit=totalRev-totalCost, margin=totalRev>0?Math.round(totalProfit/totalRev*100):0;
+  var activeCount=0; for (var k in activeSet) { if(activeSet[k]) activeCount++; }
+
+  ge('k-rev').textContent=fmt(totalRev,true); ge('k-rev-s').textContent=activeCount>0?('+'+activeCount+' proyectos activos'):'Solo confirmados';
+  ge('k-cost').textContent=fmt(-totalCost,true);
+  ge('k-profit').textContent=fmt(totalProfit,true); ge('k-profit').className='kpi-val '+(totalProfit>=0?'pos':'neg');
+  ge('k-profit-s').textContent=totalProfit>=0?'Año positivo':'Deficit proyectado';
+  ge('k-margin').textContent=margin+'%'; ge('k-margin').className='kpi-val '+(margin>=0?'pos':'neg');
+  ge('k-margin-s').textContent=margin>=0?'Rentable':'Bajo equilibrio';
+  var kp=ge('k-profit').parentNode; if(kp) kp.className='kpi '+(totalProfit>=0?'kpi-pos':'kpi-neg');
+  var km=ge('k-margin').parentNode; if(km) km.className='kpi '+(margin>=0?'kpi-pos':'kpi-neg');
+
+  if (cMain) {
+    var bp=[],cum=0,cumArr=[];
+    for(var i=0;i<12;i++){bp.push(Math.round(R[i]-COSTS[i]));cum+=R[i]-COSTS[i];cumArr.push(Math.round(cum));}
+    cMain.data.datasets[0].data=bp; cMain.data.datasets[1].data=cumArr; highlightBar();
+  }
+  renderBreakdown(); renderMonthDetail();
+}
+
+window.addEventListener('load', function() {
+  buildToggles();
+  for (var i=0; i<MO.length; i++) {
+    (function(mi) {
+      var b=document.createElement('button'); b.className='m-btn'; b.id='mb-'+mi; b.textContent=MO[mi];
+      b.onclick=function(){selectMonth(selMonth===mi?-1:mi);};
+      document.querySelector('.month-nav').appendChild(b);
+    })(i);
+  }
+  var gc='rgba(255,255,255,.06)', tc='#666680';
+  var tickFmt=function(v){return (v<0?'-':'')+'$'+Math.round(Math.abs(v)/1000)+'K';};
+  var R=annualRevenue(), bp=[],cum=0,cumArr=[];
+  for(var i=0;i<12;i++){bp.push(Math.round(R[i]-COSTS[i]));cum+=R[i]-COSTS[i];cumArr.push(Math.round(cum));}
+  cMain=new Chart(ge('cMain'),{
+    type:'bar',
+    data:{labels:MO,datasets:[
+      {label:'Resultado',data:bp,
+       backgroundColor:R.map(function(r,i){return r>=COSTS[i]?'rgba(34,201,138,.45)':'rgba(240,92,92,.4)';}),
+       borderColor:R.map(function(r,i){return r>=COSTS[i]?'#22c98a':'#f05c5c';}),
+       borderWidth:1.5,borderRadius:5,order:1},
+      {label:'Acumulado',type:'line',data:cumArr,borderColor:'#7c6af7',backgroundColor:'rgba(124,106,247,.08)',
+       pointRadius:4,pointBackgroundColor:'#7c6af7',tension:.35,fill:true,order:0,yAxisID:'y2'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      onClick:function(_,els){if(els.length){var i=els[0].index;selectMonth(selMonth===i?-1:i);}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+(c.raw<0?'-':'')+'$'+Math.abs(c.raw).toLocaleString('en-US');}}}},
+      scales:{
+        x:{grid:{color:gc},ticks:{color:tc,font:{size:11},autoSkip:false,maxRotation:0}},
+        y:{grid:{color:gc},ticks:{color:tc,font:{size:11},callback:tickFmt}},
+        y2:{position:'right',grid:{display:false},ticks:{color:'#7c6af7',font:{size:11},callback:tickFmt}}
+      }}
+  });
+  update(); updateSim(); updateP3();
+});
+</script>
+</body>
+</html>
